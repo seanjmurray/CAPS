@@ -1,73 +1,38 @@
 'use strict';
 
-// const emitter = require("../libs/events");
-// require('../driver/driver')
-// require('../vendor/vendor')
-// /* 
-// Main Hub Application
-// Manages the state of every package (ready for pickup, in transit, delivered, etc)
-// Logs every event to the console with a timestamp and the event payload
-// i.e. “EVENT {}”
-// */
+const io = require('socket.io')(process.env.PORT || 3000)
 
+io.on('connection', (socket) => {
+console.log(socket.id)
+});
 
-const logger = (name) => {
-  return payload => {
-    const time = new Date().toString()
-    console.log('EVENT',{ event:name, time, payload })
-  }
-}
+// CAPS Namespace for vendor and driver
+const caps = io.of('/caps')
 
-
-// emitter.on('in-transit', logger('in-transit'))
-// emitter.on('delivered', logger('delivered'))
-const net = require('net');
-
-const port = process.env.PORT || 3000;
-const server = net.createServer();
-
-server.listen(port, () => console.log(`Server up on ${port}`));
-
-// Create a list of clients that have connected to us.
-let socketPool = {};
-
-server.on('connection', (socket) => {
-  // Give each client a unique ID number
-  const id = `Socket-${Math.random()}`;
-  // Add them to the list (we're going to need this later...)
-  socketPool[id] = socket;
-  // Here's what we do when events come in
-  socket.on('data', (buffer) => dispatchEvent(buffer));
+caps.on('connection', (socket) => {
+  socket.on('join', id => {
+    socket.join(id)
+  })
+  // pickup handler re emits event
+  socket.on('pickup', payload => {
+    logIt('pickup',payload)
+    caps.emit('pickup', payload)
+  })
+  // in transit event only sends back to vendor
+  socket.on('in-transit', payload => {
+    logIt('in-transit',payload)
+    caps.to(payload.storeName).emit('in-transit', payload)
+  })
+  // delivery only sends back to vendor
+  socket.on('delivered', payload => {
+    logIt('delivered',payload)
+    caps.to(payload.storeName).emit('delivered', payload)
+  })
   
-  // Note that this is the same as the above ... how does that work in Javascript?
-  // socket.on('data', dispatchEvent);
+})
 
-  socket.on('error', (e) => { console.log('SOCKET ERROR', e); });
-  socket.on('end', (e) => { delete socketPool[id]; });
-
-});
-
-
-
-server.on('error', (e) => {
-  console.error('SERVER ERROR', e.message);
-});
-
-function dispatchEvent(buffer) {
-  let message = JSON.parse(buffer);
-  // Right now, this is "dumb", just sending out the same messages to everyone
-  // How might we handle more complex events and maybe chat commands?
-  console.log('EVENT', message)
-  broadcast(message);
+function logIt(eventName, payload) {
+  console.log('EVENT', {event: eventName,time: new Date(), payload});
 }
 
-// Need to loop over every socket connection and manually
-// send the message to them
-function broadcast(message) {
-  // Message is an object with 2 props: event and payload
-  // We can use those to handle every event type and payload differently, if we choose
-  let payload = JSON.stringify(message);
-  for (let socket in socketPool) {
-    socketPool[socket].write(payload)
-  }
-}
+

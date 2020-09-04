@@ -1,26 +1,24 @@
 'use strict';
-const io = require('socket.io-client')
 
-const socket = io.connect('http://localhost:3000/caps');
+const Queue = require('./lib/queue.js');
+const queue = new Queue('driver');
 
-socket.on('connect', () => {
-  // emits in-transit after 1.5 sec then delivery after 3 sec
-  socket.on('pickup', payload => {
-    handlePickup(payload)
-  })
-})
+queue.subscribe('pickup', (payload) => {
+  console.log('Picking Up', payload);
+  pickup(payload);
+});
 
-const handlePickup = (order) => {
+queue.trigger('getall', 'pickup');
+
+function pickup(payload) {
   setTimeout(() => {
-    console.log(`DRIVER: picked up ${order.orderID}`)
-    socket.emit('in-transit', order)
-    handleDelivery(order)
-  },1500)
+    queue.trigger('in-transit', payload);
+    deliver(payload);
+  }, 1000);
 }
 
-const handleDelivery = (order) => {
+function deliver(payload) {
   setTimeout(() => {
-    console.log(`DRIVER: delivered ${order.orderID}`)
-    socket.emit('delivered', order)
-  },3000)
+    queue.trigger('delivered', payload);
+  }, 1500);
 }

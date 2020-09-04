@@ -1,19 +1,18 @@
 {
-  "name": "codefellows-parcel-service-server",
+  "name": "server",
   "version": "1.0.0",
   "description": "",
-  "main": "api.js",
+  "main": "client.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node api.js"
+    "start": "node client.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.17.1",
     "faker": "^4.1.0",
+    "nodemon": "^2.0.4",
     "socket.io-client": "^2.3.0"
   }
 }

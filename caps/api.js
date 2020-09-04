@@ -32,13 +32,18 @@ app.post('/delivery/:store/:code', (req, res) => {
 });
 
 app.post('/pickup', (req, res) => {
+  const delivery;
+  if(Object.keys(req.body).length){
+    delivery = req.body || {
+      store: '1-206-flowers',
 
-  let delivery = req.body || {
-    store: '1-206-flowers',
-    orderID: faker.random.uuid(),
-    customer: req.body.customer,
-    address: req.body.address,
-  };
+      orderID: faker.random.uuid(),
+      customer: faker.name.findName(),
+      address: faker.address.streetAddress(),
+    };
+  } else {
+    delivery = req.body
+  }
 
   queue.trigger('pickup', delivery);
   res.status(200).send('scheduled');

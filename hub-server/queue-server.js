@@ -61,7 +61,7 @@ io.on('connection', (socket) => {
     //   messages['delivered'][subscriber][messageID] = message.payload;
     // }
 
-    // messages['delivered'][message.payload.store][messageID] = message.payload;
+    messages['delivered'][message.payload.store][messageID] = message.payload;
 
     // Send them all out
     // This would go to every connected client for this event
@@ -74,7 +74,7 @@ io.on('connection', (socket) => {
   socket.on('pickup', (message) => {
     let messageID = uuid();
     // To the queue
-    // messages['pickup']['driver'][messageID] = message.payload;
+    messages['pickup']['driver'][messageID] = message.payload;
     // To the driver
     io.in('driver').emit('pickup', { messageID, payload: message.payload });
   });
@@ -82,7 +82,7 @@ io.on('connection', (socket) => {
   socket.on('in-transit', (message) => {
     let messageID = uuid();
     // To the queue
-    // messages['in-transit'][message.payload.store][messageID] = message.payload;
+    messages['in-transit'][message.payload.store][messageID] = message.payload;
     // To the store
     io.in(message.payload.store).emit('in-transit', { messageID, payload: message.payload });
   });
